@@ -1,11 +1,327 @@
-<!DOCTYPE html>
-<html lang="pt-br">
+<!doctype html>
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Loja Exemplo — Menu de Opções de Produto</title>
+
+  <!--
+    Exemplo de "CSS em cascata" dentro de um único ficheiro:
+    1) Regras base (browser reset / normalização)
+    2) Regras de layout & componentes gerais
+    3) Regras específicas (mais alta especificidade para sobrescrever)
+    4) Regras responsivas (media queries)
+
+    A cascata faz com que a ordem e a especificidade importem — aqui mostramos isso
+  -->
+  <style>
+    /* ---------- 1) Reset / estilos base (baixa especificidade) ---------- */
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial}
+    img{max-width:100%;display:block}
+    button{font:inherit}
+
+    /* ---------- 2) Layout & componentes (categoria: geral) ---------- */
+    header{background:linear-gradient(90deg,#0f172a,#0b1220);color:white;padding:1rem}
+    .container{max-width:1100px;margin:0 auto;padding:1rem}
+
+    .topbar{display:flex;align-items:center;gap:1rem;justify-content:space-between}
+    .brand{font-weight:700;letter-spacing:0.3px}
+
+    /* Menu de categorias (vertical em desktop, horizontal em mobile) */
+    nav.categories{background:#f8fafc;padding:.75rem;border-radius:10px}
+    nav.categories ul{list-style:none;margin:0;padding:0;display:flex;gap:.5rem;flex-wrap:wrap}
+    nav.categories li{cursor:pointer;padding:.6rem .8rem;border-radius:8px}
+    nav.categories li:hover{background:#e6eef9}
+    nav.categories li.active{background:#0ea5e9;color:white}
+
+    /* Grid de produtos */
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem;margin-top:1rem}
+    .card{background:white;border-radius:12px;padding:1rem;box-shadow:0 6px 18px rgba(2,6,23,.06);display:flex;flex-direction:column;gap:.5rem}
+    .card .meta{display:flex;justify-content:space-between;align-items:center}
+
+    .price{font-weight:700}
+
+    /* Painel lateral para opções do produto */
+    .panel{position:fixed;right:1.25rem;top:6rem;width:320px;background:white;border-radius:12px;padding:1rem;box-shadow:0 20px 40px rgba(2,6,23,.15);transform:translateX(10px);transition:transform .22s ease,opacity .22s ease;opacity:1}
+    .panel.hidden{transform:translateX(120%);opacity:0;pointer-events:none}
+
+    .option-group{margin:.5rem 0}
+    .option-group label{display:block;font-size:.85rem;margin-bottom:.35rem}
+    .options{display:flex;gap:.5rem;flex-wrap:wrap}
+    .options button{padding:.45rem .6rem;border-radius:8px;border:1px solid #d1d5db;background:#fff;cursor:pointer}
+    .options button.selected{background:#111827;color:white;border-color:transparent}
+
+    /* Botão principal */
+    .btn-primary{background:#0ea5e9;color:white;border:none;padding:.65rem 1rem;border-radius:10px;cursor:pointer}
+
+    /* ---------- 3) Regras mais específicas para sobrescrever (exemplo) ---------- */
+    /* Forçamos que quando o nav tem a classe .vertical os itens sejam coluna */
+    nav.categories.vertical ul{flex-direction:column}
+
+    /* ---------- 4) Responsivo (media queries) ---------- */
+    @media (max-width:800px){
+      .topbar{flex-direction:column;align-items:flex-start}
+      .panel{position:static;width:100%;transform:none;box-shadow:none;margin-top:1rem}
+    }
+
+    /* Acessibilidade visual */
+    :focus{outline:3px solid #93c5fd;outline-offset:2px}
+  </style>
 </head>
 <body>
-    
+  <header>
+    <div class="container topbar">
+      <div style="display:flex;align-items:center;gap:.75rem">
+        <div class="brand">Minha Loja</div>
+        <div style="opacity:.85;font-size:.95rem">Produtos — selecione uma categoria</div>
+      </div>
+      <div style="display:flex;gap:.6rem;align-items:center">
+        <input id="search" type="search" placeholder="Pesquisar produto..." aria-label="Pesquisar produto" />
+        <button class="btn-primary" id="toggleCategories">Alternar menu</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" style="padding-top:1rem">
+    <div style="display:grid;grid-template-columns:260px 1fr;gap:1rem;align-items:start">
+
+      <!-- Menu de categorias -->
+      <nav class="categories" id="categoriesNav" aria-label="Categorias de produtos">
+        <ul>
+          <li data-filter="all" class="active" tabindex="0">Todos</li>
+          <li data-filter="electronics" tabindex="0">Eletrônicos</li>
+          <li data-filter="fashion" tabindex="0">Moda</li>
+          <li data-filter="home" tabindex="0">Casa</li>
+          <li data-filter="sports" tabindex="0">Esportes</li>
+        </ul>
+      </nav>
+
+      <!-- Conteúdo: grid de produtos -->
+      <section>
+        <div id="productsGrid" class="grid" aria-live="polite">
+          <!-- Cards de exemplo com atributos de dados usados para filtrar e controlar -->
+          <article class="card" data-category="electronics" data-id="p1" tabindex="0">
+            <img src="https://via.placeholder.com/400x240?text=Fone+Sem+Fio" alt="Fone sem fio" />
+            <div class="meta">
+              <div>
+                <div style="font-weight:600">Fone Sem Fio</div>
+                <div style="font-size:.9rem;color:#6b7280">Marca X</div>
+              </div>
+              <div class="price">R$ 199,90</div>
+            </div>
+            <p style="font-size:.9rem;color:#374151;margin-top:.4rem">Áudio Bluetooth com cancelamento de ruído.</p>
+            <div style="margin-top:auto;display:flex;justify-content:space-between;align-items:center">
+              <button class="btn-primary select-product">Ver opções</button>
+              <button class="" aria-label="Adicionar ao carrinho">➕</button>
+            </div>
+          </article>
+
+          <article class="card" data-category="fashion" data-id="p2" tabindex="0">
+            <img src="https://via.placeholder.com/400x240?text=Jaqueta" alt="Jaqueta" />
+            <div class="meta">
+              <div>
+                <div style="font-weight:600">Jaqueta Unissex</div>
+                <div style="font-size:.9rem;color:#6b7280">Marca Y</div>
+              </div>
+              <div class="price">R$ 259,00</div>
+            </div>
+            <p style="font-size:.9rem;color:#374151;margin-top:.4rem">Tecido leve e resistente — ideal para outono.</p>
+            <div style="margin-top:auto;display:flex;justify-content:space-between;align-items:center">
+              <button class="btn-primary select-product">Ver opções</button>
+              <button aria-label="Adicionar ao carrinho">➕</button>
+            </div>
+          </article>
+
+          <article class="card" data-category="home" data-id="p3" tabindex="0">
+            <img src="https://via.placeholder.com/400x240?text=Luminaria" alt="Luminária de mesa" />
+            <div class="meta">
+              <div>
+                <div style="font-weight:600">Luminária de Mesa</div>
+                <div style="font-size:.9rem;color:#6b7280">CasaLuz</div>
+              </div>
+              <div class="price">R$ 89,90</div>
+            </div>
+            <p style="font-size:.9rem;color:#374151;margin-top:.4rem">Iluminação LED com brilho ajustável.</p>
+            <div style="margin-top:auto;display:flex;justify-content:space-between;align-items:center">
+              <button class="btn-primary select-product">Ver opções</button>
+              <button aria-label="Adicionar ao carrinho">➕</button>
+            </div>
+          </article>
+
+          <article class="card" data-category="sports" data-id="p4" tabindex="0">
+            <img src="https://via.placeholder.com/400x240?text=Tenis" alt="Tênis esportivo" />
+            <div class="meta">
+              <div>
+                <div style="font-weight:600">Tênis Corrida</div>
+                <div style="font-size:.9rem;color:#6b7280">RunFast</div>
+              </div>
+              <div class="price">R$ 349,90</div>
+            </div>
+            <p style="font-size:.9rem;color:#374151;margin-top:.4rem">Amortecimento avançado para longas distâncias.</p>
+            <div style="margin-top:auto;display:flex;justify-content:space-between;align-items:center">
+              <button class="btn-primary select-product">Ver opções</button>
+              <button aria-label="Adicionar ao carrinho">➕</button>
+            </div>
+          </article>
+
+        </div>
+
+        <!-- Peça para quando não houver produtos -->
+        <div id="emptyState" style="display:none;padding:2rem;background:#fff;border-radius:12px;margin-top:1rem;text-align:center;color:#6b7280">Nenhum produto encontrado para essa categoria.</div>
+      </section>
+
+    </div>
+
+    <!-- Painel lateral de opções do produto -->
+    <aside id="optionsPanel" class="panel hidden" aria-hidden="true" aria-labelledby="panelTitle">
+      <h3 id="panelTitle">Opções do produto</h3>
+      <div id="panelContent">
+        <p style="margin:0.25rem 0;color:#6b7280">Selecione variações e adicione ao carrinho.</p>
+
+        <div class="option-group">
+          <label>Tamanho</label>
+          <div class="options" id="sizeOptions">
+            <button data-value="S">S</button>
+            <button data-value="M">M</button>
+            <button data-value="L">L</button>
+            <button data-value="XL">XL</button>
+          </div>
+        </div>
+
+        <div class="option-group">
+          <label>Cor</label>
+          <div class="options" id="colorOptions">
+            <button data-value="Preto">Preto</button>
+            <button data-value="Branco">Branco</button>
+            <button data-value="Azul">Azul</button>
+            <button data-value="Vermelho">Vermelho</button>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:.6rem;margin-top:1rem;align-items:center">
+          <button id="addToCart" class="btn-primary">Adicionar ao carrinho</button>
+          <button id="closePanel">Fechar</button>
+        </div>
+
+        <div style="margin-top:.75rem;font-size:.9rem;color:#374151">Selecionado: <span id="selectedProduct">Nenhum</span></div>
+      </div>
+    </aside>
+
+  </main>
+
+  <script>
+    // Interações: filtro de categorias, alternar painel, selecionar produto e opções
+    const categoriesNav = document.getElementById('categoriesNav');
+    const categoryItems = Array.from(categoriesNav.querySelectorAll('li'));
+    const productsGrid = document.getElementById('productsGrid');
+    const productCards = Array.from(productsGrid.querySelectorAll('.card'));
+    const emptyState = document.getElementById('emptyState');
+
+    const optionsPanel = document.getElementById('optionsPanel');
+    const panelTitle = document.getElementById('panelTitle');
+    const selectedProductLabel = document.getElementById('selectedProduct');
+    const toggleCategoriesBtn = document.getElementById('toggleCategories');
+
+    // Alterna a classe vertical (exemplo de override de css) — útil em telas pequenas
+    toggleCategoriesBtn.addEventListener('click', ()=>{
+      categoriesNav.classList.toggle('vertical');
+    });
+
+    // Filtro de categoria
+    function filterBy(category){
+      let visible = 0;
+      productCards.forEach(card=>{
+        const cat = card.dataset.category;
+        if(category === 'all' || category === cat){
+          card.style.display = '';
+          visible++;
+        } else {
+          card.style.display = 'none';
+        }
+      });
+      emptyState.style.display = visible === 0 ? 'block' : 'none';
+    }
+
+    categoryItems.forEach(item=>{
+      item.addEventListener('click', ()=>{
+        categoryItems.forEach(i=>i.classList.remove('active'));
+        item.classList.add('active');
+        filterBy(item.dataset.filter);
+      });
+      // acessibilidade: permitir selecionar com Enter
+      item.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') item.click(); });
+    });
+
+    // Abrir painel com o produto selecionado
+    function openPanelFor(card){
+      const id = card.dataset.id;
+      const title = card.querySelector('div[style*="font-weight:600"]')?.innerText || 'Produto';
+      panelTitle.innerText = title;
+      selectedProductLabel.innerText = title + ' — ' + (card.querySelector('.price')?.innerText || '');
+      optionsPanel.classList.remove('hidden');
+      optionsPanel.setAttribute('aria-hidden','false');
+      // reset seleção de opções
+      document.querySelectorAll('.options button').forEach(b=>b.classList.remove('selected'));
+    }
+
+    // Eventos nos botões "Ver opções"
+    document.querySelectorAll('.select-product').forEach((btn,i)=>{
+      btn.addEventListener('click', (e)=>{
+        const card = e.target.closest('.card');
+        openPanelFor(card);
+      });
+    });
+
+    // Fechar painel
+    document.getElementById('closePanel').addEventListener('click', ()=>{
+      optionsPanel.classList.add('hidden');
+      optionsPanel.setAttribute('aria-hidden','true');
+    });
+
+    // Seleção de opções (tamanho / cor)
+    document.querySelectorAll('.options').forEach(group=>{
+      group.addEventListener('click', (e)=>{
+        const btn = e.target.closest('button');
+        if(!btn) return;
+        // marcar apenas neste grupo
+        Array.from(group.querySelectorAll('button')).forEach(b=>b.classList.remove('selected'));
+        btn.classList.add('selected');
+      });
+    });
+
+    // Adicionar ao carrinho (simulação)
+    document.getElementById('addToCart').addEventListener('click', ()=>{
+      const title = panelTitle.innerText;
+      const size = document.querySelector('#sizeOptions button.selected')?.dataset.value || '—';
+      const color = document.querySelector('#colorOptions button.selected')?.dataset.value || '—';
+      alert(`Adicionado ao carrinho:\n${title}\nTamanho: ${size}\nCor: ${color}`);
+      // fechar painel após adicionar
+      optionsPanel.classList.add('hidden');
+      optionsPanel.setAttribute('aria-hidden','true');
+    });
+
+    // Pesquisa simples por texto no grid
+    document.getElementById('search').addEventListener('input', (e)=>{
+      const q = e.target.value.toLowerCase().trim();
+      let visible = 0;
+      productCards.forEach(card=>{
+        const text = (card.innerText || '').toLowerCase();
+        if(text.includes(q)) { card.style.display = ''; visible++; }
+        else card.style.display = 'none';
+      });
+      emptyState.style.display = visible === 0 ? 'block' : 'none';
+      // remover seleção de categoria
+      categoryItems.forEach(i=>i.classList.remove('active'));
+    });
+
+    // Ações de teclado para cards (Enter abre painel)
+    productCards.forEach(card=>{
+      card.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') openPanelFor(card); });
+    });
+
+    // Inicializa com todos visíveis
+    filterBy('all');
+  </script>
 </body>
 </html>
